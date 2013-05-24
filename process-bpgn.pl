@@ -8,25 +8,27 @@ $|=1;
 ##  Given the input database file, it will parse the PGNs and then store them locally
 ##  using the bug-db   module.
 sub save_pgn_games {
-    my $filename = shift;
+    my ($filename, $limit) = @_;
     open ORIG, "<", $filename or die $!;
-    print "Opening file.\n";
+    print "Opening raw bpgn file $filename \n";
     ## "s" will be the string of the bug game. 
     my $s = "";
-        
+    my $counter = 0;
+    
     while( (my $line = <ORIG>)) {
         chomp $line;
         
         if($line=~/\[Event/) {
              db_save_game_opening(pgn_to_obj($s)) if(length($s)>0);
              $s = "";
-     
+             last if(++$counter == $limit);
+             print "\n\t--> $counter \n"  if($counter % 10000==0)
         }
         else {
             $s = $s . "  ".$line;
         }
     }
-
+    print "Closing bpgn file.\n";
     close ORIG;
 }
 
