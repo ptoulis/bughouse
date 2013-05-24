@@ -2,7 +2,6 @@ use Storable;
 
 # Each game will take almost 0.5KB in space.
 # Functions
-#1. _load_corpus()
 #2. db_min_game()
 #3. db_all_games()
 #4. db_game_meta()
@@ -16,13 +15,17 @@ use Storable;
 
 ##  DB does not load games.
 
-
-my $OPEN_RAW_DIR = 
-
-## Linux Box.
-#my $DB_FILENAME  = "/home/winotgr/A/data/bughouse/meta.db";
-#my $OPEN_BOOK_FILENAME =  "/home/winotgr/A/data/bughouse/book.db";
-
+## LOADS settings.
+my %SETTINGS;
+open FILE, "<", "bug.settings";
+my @lines = <FILE>;
+for my $line(@lines) {
+  chomp $line;
+  my @terms = split(/=/, $line);
+  $SETTINGS{$terms[0]} = $terms[1];
+}
+my $OPEN_RAW_DIR = $SETTINGS{openrawdir};
+close FILE;
 
 ##  meta_db = meta-data database
 # e.g.  db = { game_id => { Date=> "2005.02.11", Time=>"22:11:00", BughouseDBGameNo => "17", 
