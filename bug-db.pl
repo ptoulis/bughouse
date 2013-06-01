@@ -1,16 +1,18 @@
 use Storable;
- use List::Util qw(min);
+use List::Util qw(min);
+use strict;
+use warnings;
 # Each game will take almost 0.5KB in space.
 #  db_meta -- meta-database
 # Functions
 # -------------------------
 # db_game_* = db_game_aborted, db_game_exists, db_game_group, db_game_meta, db_game_opening, db_game_result
-# db_group* = db_group_games,  db_groups
+# db_group* = db_group_games,  db_groups, db_group_opening
 # db_ngames()
 # db_search_opening(..)
 # db_status()
 # db_say()
-
+$|=1;
 ##  DB does not load games.
 
 ## LOADS settings.
@@ -25,19 +27,19 @@ for my $line(@lines) {
 my $OPEN_RAW_DIR = $SETTINGS{openrawdir};
 close FILE;
 
+my $last_time = time;
+our $TIME0 = time;
+
 ##  db_meta = meta-data database  (entire object in-memory)
 # keys db = idx, rev_idx, meta
-# e.g.  db = {  idx=>{ gid => file },  rev_idx=>{file => gid },
+# e.g.  db = {  idx=>{ gameid => file },  rev_idx=>{file(group) => gid },
     # meta => { game_id => { Date=> "2005.02.11", Time=>"22:11:00", BughouseDBGameNo => "17", 
 		#	WhiteA =>"JellyRoll", WhiteAElo=>"1756", BlackA=> "oub", BlackAElo => "1619",
 		# WhiteB =>"riceman", WhiteBElo=>"2145", BlackB =>"FdTurbo", BlackBElo =>"1989", Result => "*"} }
-my $db_meta = load_db_meta();
-
+our $db_meta = load_db_meta();
+db_say(db_status(), 1);
 my $corpus = "";
 my $_game_counter = 0;
-
-
-our $TIME0 = time;
 
 # Check if game exists in database.
 sub db_game_exists {
@@ -65,14 +67,14 @@ sub db_group_games {
 }
 sub db_status {
   my @all = @{ db_all_games() }; 
-	@x = grep { !db_game_aborted($_) } @all;
+	my @x = grep { !db_game_aborted($_) } @all;
 	my @y = grep { db_game_aborted($_) } @all;
-	my $str = "\n----- DB INFO   -----\nTotal games " . (scalar @x). "(valid)"."/ " . (scalar @y). "(aborted)";
+	my $str = "----- DB INFO   -----\n\tTotal games " . (scalar @x). "(valid)"."/ " . (scalar @y). "(aborted)";
   my @groups = keys %{ $db_meta->{rev_idx}  };
 	
 	my @idx_keys  = keys %{$db_meta->{idx}};
-	my $str3 = "Total " . scalar @idx_keys. " idx games in ". (scalar @groups). " groups.";
-	return($str. "\n".$str. "\n" . $str3. "\n");
+	my $str3 = "\tTotal " . scalar @idx_keys. " idx games in ". (scalar @groups). " groups.";
+	return($str. "\n" . $str3);
 }
 
 ## Total no. of ids.
@@ -107,6 +109,30 @@ sub db_game_group {
   }
   return $db_meta->{idx}{$game_id};
 }
+
+#######    GROUP-RELATED functions.
+sub db_groups {
+  my @groups = keys %{$db_meta->{rev_idx}};
+  return \@groups;
+}
+
+sub db_group_opening {
+  my $groupid = shift;
+  my $filename = get_group_filename($groupid);
+  if(! -f $filename) {
+    db_say("ERROR: Not such group $groupid  file=$filename");
+    return 0;
+  }
+  
+  open FILE,"<", $filename;
+  my @lines = <FILE>;
+  chomp @lines;
+  if(scalar @lines > 1) {
+    db_say("WARNING: Expected only one line of opening.")
+  }
+  return join("", @lines);
+}
+
 ## TODO(ptoulis): Implement this.
 ## Retrieves the game opening.
 sub db_game_opening {
@@ -213,16 +239,18 @@ sub _save_game_meta {
 	$db_meta->{meta}{$gid}  = $pgn_obj;
 }
 
-my $last_time = time;
 sub db_say {
-	my $msg = shift;
+	my ($msg, $bypass) = @_;
     my $t1 = time;
-    return if ($t1-$last_time<1);
+    $bypass = (defined $bypass ? $bypass : 0);
+    return if ($t1-$last_time<1 && !$bypass);
     $last_time = $t1;
 	print sprintf("[%ds-\t%-50s\t]\n", ($t1-$TIME0), $msg);
 }
+
 sub load_db_meta {
-    db_say("Loading meta-db information");
+    db_say("Loading meta-db information...", 1);
+    db_say("Please wait. Might take some time...", 1);
     my $empty =  {idx=>{}, rev_idx=>{}, meta=>{}, staged=>[]};
     my $mf = get_meta_filename();
     return retrieve($mf) if -f $mf;
@@ -240,3 +268,5 @@ sub get_group_filename {
   my $filename = $OPEN_RAW_DIR."db-".$gid.".bh";
   return $filename;
 }
+
+1;
