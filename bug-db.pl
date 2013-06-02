@@ -15,17 +15,23 @@ use warnings;
 $|=1;
 ##  DB does not load games.
 
-## LOADS settings.
-my %SETTINGS;
-open FILE, "<", "bug.settings";
-my @lines = <FILE>;
-for my $line(@lines) {
-  chomp $line;
-  my @terms = split(/=/, $line);
-  $SETTINGS{$terms[0]} = $terms[1];
+sub db_read_settings {
+  ## LOADS settings.
+  my %SETTINGS;
+  open FILE, "<", "bug.settings";
+  my @lines = <FILE>;
+  for my $line(@lines) {
+    chomp $line;
+    my @terms = split(/=/, $line);
+    $SETTINGS{$terms[0]} = $terms[1];
+  }
+ 
+  close FILE;
+  return \%SETTINGS;
 }
+
+our %SETTINGS = %{db_read_settings()};
 my $OPEN_RAW_DIR = $SETTINGS{openrawdir};
-close FILE;
 
 my $last_time = time;
 our $TIME0 = time;
