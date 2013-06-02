@@ -2,9 +2,7 @@ use strict;
 use warnings;
 
 require("bug-db.pl");
-require("process-bpgn.pl");
+require("bug-search.pl");
 
-print db_status(), "\n";
-my $gameid = db_all_games()->[0];
-
-
+$|=1;
+search_opening("e4 e5 Bc4");
