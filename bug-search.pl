@@ -80,19 +80,26 @@ sub example_response {
 
 ## Returns a SearchResponse object.
 sub search_opening {
+
   my ($query, $filter) = @_;
+  # the response ARRAY
   my $response = [];
+  # next moves given the query. keys will be moves (STRING)
   my %next_moves = ();
+  # max # of games to return per next_move
   my $CAP_RESULT_GAMES = 2; 
-  
+  db_say("Running query. please wait..", 1);
+  # Random number from 0.. MAX-1
   my $random_position = sub {
      my $random_number = int(rand($CAP_RESULT_GAMES));
     return $random_number;
   };
+  # How many games have we generated for this move?
   my $moves_size = sub {
     my $move = shift;
     return scalar @{$next_moves{$move}{games}};
   };
+  ## Will add a game to the next_move only if CAP has not been reached.
   my $add_opening_maybe = sub {
     my ($move, $gameid, $groupid, $board) = @_;
     my $obj = {gameid=> $gameid, opening=>get_opening($groupid, $gameid, $board)};
@@ -105,10 +112,12 @@ sub search_opening {
   };
   
   chomp $query;
+  ## Iterate over all groups 
+  ## TODO(ptoulis): Probably not a good idea.
   my @groups  = shuffle(keys %$db_search);
   for my $groupid (@groups) {
     my $game = $db_search->{$groupid};
-    my %boardsA = $game =~ /<(\d+),$query\s([^>]*?)\s/g;
+    my %boardsA = $game =~ /<(\d+),\s?$query\s?([^>]*?)\s/g;
     my %boardsB = $game =~ /<(\d+),[^>]*?W$query\s([^>]*?)\s/g; 
    
     for my $gameid (keys %boardsA) {
@@ -137,6 +146,8 @@ sub search_opening {
   open FILE, ">" , $resp_filename;
   print FILE to_json($response);
   close FILE;
+  
+  db_say("Query executed.");
   return $resp_filename;
   
 }
