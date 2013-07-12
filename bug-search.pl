@@ -166,34 +166,34 @@ db_say("Bug Server running at <URL:". $d->url. ">", 1);
 ##  3.  The example code in http://search.cpan.org/~gaas/HTTP-Daemon-6.01/lib/HTTP/Daemon.pm is bad
 ##      Had to remove the loop in get_request.
 while (my $c = $d->accept) {
-    db_say("Waiting for requests..");
-    my $r = $c->get_request;
-    $r->uri->path =~ /\/(.*?)$/;
-    my $filename = $settings{hdocs}.$1;
-    db_say("Path = <". $r->uri->path."> File=<$filename>",1 );
-    
-    ## Main server branching
-    if ($r->method eq "GET" && $r->uri->path eq "/") {
-      $c->send_file_response($settings{hdocs}."index.html");
-    } 
-    elsif($r->method eq "GET" && $r->uri->path =~ /\/q=(.*?)$/) {
-      my $bugquery = $1;
-      db_say("Asking for bug opening " . $bugquery, 1);
-      $bugquery = join(" ", split(/%20/, $bugquery));
-      db_say("Beautified " . $bugquery, 1);
-      # remember, this is *not* recommended practice :-)
-      my $json_response = search_opening($bugquery);
-      print "\n\tFilename ", $json_response, "\n";
-      $c->send_file_response($json_response);
-    } 
-    elsif ($r->method eq 'GET' && -f $filename) {
-      $c->send_file_response($filename);
-    }
-    else { 
-      $c->send_error(RC_FORBIDDEN)    
-    }
-    $c->close;
-    undef($c);
+  db_say("Waiting for requests..");
+  my $r = $c->get_request;
+  $r->uri->path =~ /\/(.*?)$/;
+  my $filename = $settings{hdocs}.$1;
+  db_say("Path = <". $r->uri->path."> File=<$filename>",1 );
+  
+  ## Main server branching
+  if ($r->method eq "GET" && $r->uri->path eq "/") {
+    $c->send_file_response($settings{hdocs}."index.html");
+  } 
+  elsif($r->method eq "GET" && $r->uri->path =~ /\/q=(.*?)$/) {
+    my $bugquery = $1;
+    db_say("Asking for bug opening " . $bugquery, 1);
+    $bugquery = join(" ", split(/%20/, $bugquery));
+    db_say("Beautified " . $bugquery, 1);
+    # remember, this is *not* recommended practice :-)
+    my $json_response = search_opening($bugquery);
+    print "\n\tFilename ", $json_response, "\n";
+    $c->send_file_response($json_response);
+  } 
+  elsif ($r->method eq 'GET' && -f $filename) {
+    $c->send_file_response($filename);
+  }
+  else { 
+    $c->send_error(RC_FORBIDDEN)    
+  }
+  $c->close;
+  undef($c);
 }
 
 
