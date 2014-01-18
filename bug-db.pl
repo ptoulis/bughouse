@@ -269,6 +269,7 @@ sub get_meta_filename {
   my $meta_filename =  $OPEN_RAW_DIR."_meta.obj";
   return $meta_filename;
 }
+
 sub get_group_filename {
   my $gid = shift;
   my $filename = $OPEN_RAW_DIR."db-".$gid.".bh";

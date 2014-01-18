@@ -92,5 +92,3 @@ sub print_hash {
 }
 
 1;
-
-1;
