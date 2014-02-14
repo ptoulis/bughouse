@@ -175,7 +175,7 @@ sub db_game_opening {
 
 ## Given a PGN object, saves it to the DB
 sub db_save_game_opening {
-	my $pgn_obj = shift;
+  my $pgn_obj = shift;
   my $gameid = $pgn_obj->{BughouseDBGameNo};
   ## Check if game already exists.
   if(db_game_exists( $gameid ) )
